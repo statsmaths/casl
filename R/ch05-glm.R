@@ -23,10 +23,10 @@ function(X, y, maxit=25L, tol=1e-10)
   for(j in seq(1L, maxit))
   {
     b_old <- beta
-    mu <- 1 / (1 + exp(- X %*% beta))
-    W <- as.numeric(mu * (1 - mu))
+    p <- 1 / (1 + exp(- X %*% beta))
+    W <- as.numeric(p * (1 - p))
     XtX <- crossprod(X, diag(W) %*% X)
-    score <- t(X) %*% (y - mu)
+    score <- t(X) %*% (y - p)
     delta <- solve(XtX, score)
     beta <- beta + delta
     if(sqrt(crossprod(beta - b_old)) < tol) break

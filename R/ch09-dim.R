@@ -143,7 +143,6 @@ function(X, k=10L)
 casl_spectral_clust <-
 function(S, k=1)
 {
-  Droot_inv <- diag(sqrt(apply(S, 1, sum)))
   D <- diag(apply(S, 1, sum))
   L <- D - S
   e <- eigen(L)
