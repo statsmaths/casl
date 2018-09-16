@@ -50,8 +50,9 @@ function(X, y, X_new, h)
 casl_nlm_poly <-
 function(X, y, X_new, k)
 {
-  Z <- cbind(1, stats::poly(X, degree = k))
+  Z <- stats::poly(X, degree = k)
   Z_new <- cbind(1, stats::predict(Z, X_new))
+  Z <- cbind(1, Z)
   beta <- stats::coef(stats::lm.fit(Z, y))
   y_hat <- Z_new %*% beta
   y_hat
@@ -189,7 +190,7 @@ function(Z, lambda)
 {
   d <- (ncol(Z) - 1L) / length(lambda)
   omega <- Matrix::Matrix(0, ncol = ncol(Z), nrow = ncol(Z))
-  diag(omega)[-1L] <- rep(sqrt(lambda), each = d)
+  Matrix::diag(omega)[-1L] <- rep(sqrt(lambda), each = d)
   omega
 }
 
@@ -250,17 +251,12 @@ function(Z, omega, beta_hat, s_hat, p)
   d <- (ncol(Z) - 1L) / p
   f_se <- matrix(NA_real_, ncol = p + 1L,
                            nrow = nrow(Z))
-  ZtZ <- crossprod(Z, Z)
-  B <- solve(ZtZ + crossprod(omega, omega), t(Z))
-  beta_var <- tcrossprod(B) * s_hat
-
-  for (j in seq_len(ncol(Z)))
-  {
-    id <- 1L + seq_len(d) + d * (j - 1L)
-    f_se[, j] <- sqrt(diag(Z[,id] %*% beta_var[id,id] %*%
-                     t(Z[,id])))
-  }
-  f_se[, p + 1L] <- beta_hat[1L]
+  ZtZ <- Matrix::crossprod(Z, Z)
+  B <- solve(ZtZ + Matrix::crossprod(omega, omega),
+             Matrix::t(Z))
+  beta_var <- Matrix::tcrossprod(B) * s_hat
+  A <- Z %*% beta_var
+  f_se <- apply((Z %*% beta_var) * Z, 1, sum)
   f_se
 }
 
@@ -292,9 +288,9 @@ function(X, y, lambda, order=3L, nknots=5L)
   omega <- casl_am_ls_omega(Z, lambda)
 
   # compute predicted beta and f_j values
-  beta_hat <- solve(crossprod(Z, Z) +
-                    crossprod(omega, omega),
-                    crossprod(Z, y))
+  beta_hat <- Matrix::solve(Matrix::crossprod(Z, Z) +
+                            Matrix::crossprod(omega, omega),
+                            Matrix::crossprod(Z, y))
   f <- casl_am_ls_f(Z, beta_hat, p = ncol(X))
 
   # fitted values for y and sigma^2

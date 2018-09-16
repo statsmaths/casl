@@ -40,7 +40,7 @@ function(x, y, n=1L)
 #' Chapman & Hall/CRC Texts in Statistical Science, 2019.
 #'
 #' @export
-casl_predict_poly_reg <-
+casl_nlm1d_poly_predict <-
 function(beta, x, x_new)
 {
   pobj <- stats::poly(x, n=(length(beta) - 1L))
