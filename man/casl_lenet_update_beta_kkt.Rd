@@ -4,7 +4,7 @@
 \alias{casl_lenet_update_beta_kkt}
 \title{Update beta vector using KKT conditions.}
 \usage{
-casl_lenet_update_beta_kkt(X, y, b, lambda, active_set, maxit)
+casl_lenet_update_beta_kkt(X, y, b, lambda, active_set, maxit = 10000L)
 }
 \arguments{
 \item{X}{A numeric data matrix.}

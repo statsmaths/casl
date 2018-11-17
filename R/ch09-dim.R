@@ -170,7 +170,7 @@ casl_tsne_p <-
 function(X, perplexity = 15)
 {
 
-  D <- as.matrix(dist(X))^2
+  D <- as.matrix(stats::dist(X))^2
   P <- matrix(0, nrow(X), nrow(X))
   svals <- rep(1, nrow(X))
 
@@ -222,7 +222,7 @@ function(X, perplexity = 15)
 casl_tsne <-
 function(X, perplexity=30, k=2L, iter=1000L, rho=100) {
 
-  Y <- matrix(rnorm(nrow(X) * k), ncol = k)
+  Y <- matrix(stats::rnorm(nrow(X) * k), ncol = k)
   P <- casl_tsne_p(X, perplexity)
   del <- matrix(0, nrow(Y), ncol(Y))
 

@@ -4,14 +4,12 @@
 \alias{casl_tsne_p}
 \title{Compute t-SNE probability scores.}
 \usage{
-casl_tsne_p(X, svals, norm = TRUE)
+casl_tsne_p(X, perplexity = 15)
 }
 \arguments{
 \item{X}{A numeric data matrix.}
 
-\item{svals}{Desired variances of the Gaussian densities.}
-
-\item{norm}{Logical. Should probabilities be normalized to 1.}
+\item{perplexity}{Desired perplexity score for all variables.}
 }
 \value{
 A matrix of probability densities.

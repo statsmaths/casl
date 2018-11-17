@@ -4,7 +4,7 @@
 \alias{casl_tsne}
 \title{Compute t-SNE variance values.}
 \usage{
-casl_tsne(X, perplexity, k = 2L, iter = 1000, rho = 0.1)
+casl_tsne(X, perplexity = 30, k = 2L, iter = 1000L, rho = 100)
 }
 \arguments{
 \item{X}{A numeric data matrix.}
