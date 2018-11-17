@@ -153,8 +153,7 @@ function(S, k=1)
 #' Compute t-SNE probability scores.
 #'
 #' @param X A numeric data matrix.
-#' @param svals Desired variances of the Gaussian densities.
-#' @param norm Logical. Should probabilities be normalized to 1.
+#' @param perplexity Desired perplexity score for all variables.
 #'
 #' @return A matrix of probability densities.
 #'
@@ -168,45 +167,37 @@ function(S, k=1)
 #'
 #' @export
 casl_tsne_p <-
-function(X, svals, norm=TRUE)
+function(X, perplexity = 15)
 {
 
-  d <- exp(-1 * as.matrix(stats::dist(X))^2 / (2 * svals))
-  diag(d) <- 0
-  P <- t(t(d) / apply(d, 2, sum))
-  if (norm) P <- (P + t(P)) / (2 * nrow(X))
+  D <- as.matrix(dist(X))^2
+  P <- matrix(0, nrow(X), nrow(X))
+  svals <- rep(1, nrow(X))
 
-  P
-}
-
-#' Compute t-SNE variance values.
-#'
-#' @param X A numeric data matrix.
-#' @param perplexity Desired perplexity score for all variables.
-#'
-#' @return A vector of estimated variances for each variable.
-#'
-#' @author Taylor Arnold, Michael Kane, Bryan Lewis.
-#'
-#' @references
-#'
-#' Taylor Arnold, Michael Kane, and Bryan Lewis.
-#' \emph{A Computational Approach to Statistical Learning}.
-#' Chapman & Hall/CRC Texts in Statistical Science, 2019.
-#'
-#' @export
-casl_tsne_sigma <-
-function(X, perplexity)
-{
-  fn <- function(s)
+  for (i in seq_along(svals))
   {
-    P <- casl_tsne_p(X, s, norm = FALSE)
-    perp <- 2^(-1 * apply(P, 2, sum))
-    sum((perp - perplexity)^2)
+    srange <- c(0, 100)
+    tries <- 0
+
+    for(j in seq_len(50))
+    {
+      Pji <- exp(-D[i, -i] / (2 * svals[i]))
+      Pji <- Pji / sum(Pji)
+      H <- -1 * Pji %*% log(Pji, 2)
+
+      if (H < log(perplexity, 2))
+      {
+        srange[1] <- svals[i]
+        svals[i] <- (svals[i] + srange[2]) / 2
+      } else {
+        srange[2] <- svals[i]
+        svals[i] <- (svals[i] + srange[1]) / 2
+      }
+    }
+    P[i, -i] <- Pji
   }
 
-  svals <- stats::optim(stats::runif(nrow(X)), fn)$par
-  svals
+  return(0.5 * (P + t(P)) / sum(P))
 }
 
 #' Compute t-SNE variance values.
@@ -229,26 +220,31 @@ function(X, perplexity)
 #'
 #' @export
 casl_tsne <-
-function(X, perplexity, k=2L, iter=1000, rho=0.1)
-{
-  svals <- casl_tsne_sigma(X, perplexity)
-  Y <- matrix(stats::runif(nrow(X) * k), ncol = 2L)
-  P <- casl_tsne_p(X, perplexity)
+function(X, perplexity=30, k=2L, iter=1000L, rho=100) {
 
-  for (k in seq_len(iter))
+  Y <- matrix(rnorm(nrow(X) * k), ncol = k)
+  P <- casl_tsne_p(X, perplexity)
+  del <- matrix(0, nrow(Y), ncol(Y))
+
+  for (inum in seq_len(iter))
   {
-    d <- as.matrix(stats::dist(Y))^2
-    d <- (1 + d)^(-1)
-    diag(d) <- 0
-    Q <- d / sum(d)
-    fct <- (P - Q) * d
-    gd <- Y * 0
-    for (i in seq_len(nrow(Y)))
+    num <- matrix(0, nrow(X), nrow(X))
+    for (j in seq_len(nrow(X))) {
+      for (k in seq_len(nrow(X))) {
+        num[j, k] = 1 / (1 + sum((Y[j,] - Y[k, ])^2))
+      }
+    }
+    diag(num) <- 0
+    Q <- num / sum(num)
+
+    stiffnesses <- 4 * (P - Q) * num
+    for (i in seq_len(nrow(X)))
     {
-      gd[i,] <- apply(t(t(Y) - Y[i, ]) * fct[i, ], 2, sum)
+      del[i, ] <- stiffnesses[i, ] %*% t(Y[i, ] - t(Y))
     }
 
-    Y <- Y - gd * rho
+    Y <- Y - rho * del
+    Y <- t(t(Y) - apply(Y, 2, mean))
   }
 
   Y
